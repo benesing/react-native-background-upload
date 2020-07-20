@@ -2,7 +2,7 @@
 /**
  * Handles HTTP background file uploads from an iOS or Android device.
  */
-import { NativeModules, DeviceEventEmitter } from 'react-native';
+import { NativeModules, DeviceEventEmitter, Platform } from 'react-native';
 
 export type UploadEvent = 'progress' | 'error' | 'completed' | 'cancelled';
 
@@ -40,7 +40,7 @@ if (NativeModules.VydiaRNFileUploader) {
 /*
 Gets file information for the path specified.
 Example valid path is:
-  Android: '/storage/extSdCard/DCIM/Camera/20161116_074726.mp4'
+  Android: '/storage/extSdCard/DCIM/Camera/20161116_074726.mp4' or 'file:///storage/extSdCard/DCIM/Camera/20161116_074726.mp4'
   iOS: 'file:///var/mobile/Containers/Data/Application/3C8A0EFB-A316-45C0-A30A-761BF8CCF2F8/tmp/trim.A5F76017-14E9-4890-907E-36A045AF9436.MOV;
 
 Returns an object:
@@ -50,21 +50,21 @@ Returns an object:
 The promise should never be rejected.
 */
 export const getFileInfo = (path: string): Promise<Object> => {
-  return NativeModule.getFileInfo(path).then(data => {
-    if (data.size) {
-      // size comes back as a string on android so we convert it here.  if it's already a number this won't hurt anything
-      data.size = +data.size;
-    }
-    return data;
-  });
-};
+  return NativeModule.getFileInfo(path)
+    .then(data => {
+      if (data.size) {  // size comes back as a string on android so we convert it here.  if it's already a number this won't hurt anything
+        data.size = +data.size
+      }
+      return data
+    })
+}
 
 /*
 Starts uploading a file to an HTTP endpoint.
 Options object:
 {
   url: string.  url to post to.
-  path: string.  path to the file on the device
+  path: string.  path to the file on the device ("file://" prefixed path)
   headers: hash of name/value header pairs
   method: HTTP method to use.  Default is "POST"
   notification: hash for customizing tray notifiaction
@@ -119,4 +119,10 @@ export const addListener = (
   });
 };
 
-export default { startUpload, cancelUpload, addListener, getFileInfo };
+export const canSuspendIfBackground = () => {
+  if (Platform.OS === 'ios') {
+    NativeModule.canSuspendIfBackground();
+  }
+};
+
+export default { startUpload, cancelUpload, addListener, getFileInfo, canSuspendIfBackground }
