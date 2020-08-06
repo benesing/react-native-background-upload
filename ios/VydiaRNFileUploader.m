@@ -111,6 +111,7 @@ RCT_EXPORT_METHOD(getFileInfo:(NSString *)path resolve:(RCTPromiseResolveBlock)r
 /*
  Utility method to copy a PHAsset file into a local temp file, which can then be uploaded.
  */
+#if !TARGET_OS_MACCATALYST
 - (void)copyAssetToFile: (NSString *)assetUrl completionHandler: (void(^)(NSString *__nullable tempFileUrl, NSError *__nullable error))completionHandler {
     NSURL *url = [NSURL URLWithString:assetUrl];
     PHAsset *asset = [PHAsset fetchAssetsWithALAssetURLs:@[url] options:nil].lastObject;
@@ -137,6 +138,7 @@ RCT_EXPORT_METHOD(getFileInfo:(NSString *)path resolve:(RCTPromiseResolveBlock)r
         }
     }];
 }
+#endif
 
 /*
  * Starts a file upload.
@@ -185,7 +187,7 @@ RCT_EXPORT_METHOD(startUpload:(NSDictionary *)options resolve:(RCTPromiseResolve
             }
         }];
 
-
+#if !TARGET_OS_MACCATALYST
         // asset library files have to be copied over to a temp file.  they can't be uploaded directly
         if ([fileURI hasPrefix:@"assets-library"]) {
             dispatch_group_t group = dispatch_group_create();
@@ -201,6 +203,7 @@ RCT_EXPORT_METHOD(startUpload:(NSDictionary *)options resolve:(RCTPromiseResolve
             }];
             dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
         }
+#endif
 
         NSURLSessionUploadTask *uploadTask;
 
